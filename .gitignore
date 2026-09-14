@@ -1,0 +1,38 @@
+# ---------- Frontend (React) ----------
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env
+frontend/.env.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# ---------- Backend (Spring Boot / Maven) ----------
+backend/target/
+backend/.mvn/
+backend/HELP.md
+backend/*.iml
+backend/.classpath
+backend/.project
+backend/.settings/
+
+# ---------- Database ----------
+database/*.sql.bak
+
+# ---------- IDE ----------
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+
+# ---------- Environment / secrets ----------
+.env
+application-secrets.properties
