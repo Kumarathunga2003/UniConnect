@@ -3,14 +3,12 @@ package com.uniconnect.backend.controller;
 import com.uniconnect.backend.dto.LoginRequest;
 import com.uniconnect.backend.dto.RegisterRequest;
 import com.uniconnect.backend.entity.User;
+import com.uniconnect.backend.service.JwtService;
 import com.uniconnect.backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -19,9 +17,14 @@ import java.util.Map;
 public class AuthController {
 
     private final UserService userService;
+    private final JwtService jwtService;
 
-    public AuthController(UserService userService) {
+    public AuthController(
+            UserService userService,
+            JwtService jwtService) {
+
         this.userService = userService;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/register")
@@ -53,9 +56,11 @@ public class AuthController {
 
         try {
             User user = userService.loginUser(request);
+            String token = jwtService.generateToken(user);
 
             Map<String, Object> response = Map.of(
                     "message", "Login successful",
+                    "token", token,
                     "userId", user.getId(),
                     "fullName", user.getFullName(),
                     "email", user.getEmail(),
@@ -66,13 +71,11 @@ public class AuthController {
 
         } catch (IllegalArgumentException exception) {
 
-            Map<String, Object> response = Map.of(
-                    "message", exception.getMessage()
-            );
-
             return ResponseEntity
                     .badRequest()
-                    .body(response);
+                    .body(Map.of(
+                            "message", exception.getMessage()
+                    ));
         }
     }
 }
