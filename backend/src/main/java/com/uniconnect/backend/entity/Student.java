@@ -2,6 +2,9 @@ package com.uniconnect.backend.entity;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "students")
 public class Student {
@@ -32,6 +35,14 @@ public class Student {
 
     @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
+
+    @ManyToMany
+    @JoinTable(
+            name = "student_skills",
+            joinColumns = @JoinColumn(name = "student_id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    private Set<Skill> skills = new HashSet<>();
 
     public Student() {
     }
@@ -90,5 +101,13 @@ public class Student {
 
     public void setBio(String bio) {
         this.bio = bio;
+    }
+
+    public Set<Skill> getSkills() {
+        return skills;
+    }
+
+    public void setSkills(Set<Skill> skills) {
+        this.skills = skills;
     }
 }
