@@ -1,37 +1,17 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import StatusBadge from "../components/StatusBadge";
+import { Alert, EmptyState, LoadingState } from "../components/Ui";
 import api from "../api/axios";
 import { getErrorMessage } from "../utils/errors";
-
+const stages = ["PENDING", "SHORTLISTED", "INTERVIEW", "ACCEPTED"];
 function StudentApplications() {
-  const [applications, setApplications] = useState([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  const load = async () => {
-    try { const response = await api.get("/applications/student/my"); setApplications(response.data); }
-    catch (err) { setError(getErrorMessage(err, "Unable to load applications.")); }
-    finally { setLoading(false); }
-  };
+  const [items, setItems] = useState([]); const [error, setError] = useState(""); const [loading, setLoading] = useState(true); const [active, setActive] = useState(null); const [timeline, setTimeline] = useState([]);
+  const load = async () => { try { const { data } = await api.get("/applications/student/my"); setItems(data); } catch (err) { setError(getErrorMessage(err, "Unable to load applications.")); } finally { setLoading(false); } };
   useEffect(() => { load(); }, []);
-
-  const withdraw = async (id) => {
-    if (!window.confirm("Withdraw this application?")) return;
-    try { await api.delete(`/applications/${id}`); await load(); }
-    catch (err) { setError(getErrorMessage(err, "Unable to withdraw application.")); }
-  };
-
-  return <DashboardLayout role="STUDENT" title="My Applications">
-    {error && <p className="mb-5 rounded-xl bg-red-50 p-4 text-red-700">{error}</p>}
-    {loading ? <p>Loading...</p> : <div className="space-y-4">
-      {applications.map((item) => <div key={item.id} className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center">
-        <div><h2 className="text-xl font-bold">{item.internshipTitle}</h2><p className="mt-1 text-slate-600">{item.companyName}</p><p className="mt-2 text-xs text-slate-400">Applied {item.appliedAt ? new Date(item.appliedAt).toLocaleString() : ""}</p></div>
-        <div className="flex items-center gap-3"><StatusBadge status={item.status} />{item.status === "PENDING" && <button onClick={() => withdraw(item.id)} className="rounded-lg bg-red-50 px-4 py-2 text-sm font-bold text-red-700">Withdraw</button>}</div>
-      </div>)}
-      {!applications.length && <div className="rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm">You have not applied for an internship yet.</div>}
-    </div>}
-  </DashboardLayout>;
+  const showTimeline = async (id) => { if (active === id) return setActive(null); const { data } = await api.get(`/applications/${id}/timeline`); setTimeline(data); setActive(id); };
+  const withdraw = async (id) => { if (!window.confirm("Withdraw this application?")) return; try { await api.delete(`/applications/${id}`); await load(); } catch (err) { setError(getErrorMessage(err, "Unable to withdraw application.")); } };
+  return <DashboardLayout role="STUDENT" title="My Applications"><div className="mb-7 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><p className="text-xs font-black uppercase tracking-[.18em] text-indigo-600">Application journey</p><h2 className="mt-2 text-xl font-black">Track every opportunity in one place</h2><p className="mt-2 text-sm text-slate-500">Open an application to see its complete status timeline.</p></div>{error && <Alert>{error}</Alert>}{loading ? <LoadingState label="Loading your applications..." /> : <div className="space-y-4">{items.map((item, index) => <article key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-center"><div className="flex min-w-0 gap-3 sm:gap-4"><div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-50 font-black text-indigo-600 sm:h-12 sm:w-12">{String(index + 1).padStart(2, "0")}</div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2 sm:gap-3"><h2 className="break-words text-lg font-black">{item.internshipTitle}</h2><StatusBadge status={item.status} /></div><p className="mt-1 break-words font-semibold text-indigo-600">{item.companyName}</p><p className="mt-2 text-xs text-slate-400">Applied {item.appliedAt ? new Date(item.appliedAt).toLocaleString() : "recently"}</p></div></div><div className="flex flex-col gap-2 sm:flex-row"><button onClick={() => showTimeline(item.id)} className="btn-secondary w-full sm:w-auto">{active === item.id ? "Hide timeline" : "View timeline"}</button>{item.status === "PENDING" && <button onClick={() => withdraw(item.id)} className="min-h-11 w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm font-black text-red-600 hover:bg-red-50 sm:w-auto">Withdraw</button>}</div></div>{active === item.id && <Timeline current={item.status} history={timeline} />}</article>)}{!items.length && <EmptyState icon="✓" title="No applications yet" description="When you apply for an internship, its progress will appear here." />}</div>}</DashboardLayout>;
 }
-
+function Timeline({ current, history }) { const rejected = current === "REJECTED"; const currentIndex = stages.indexOf(current); return <div className="mt-6 border-t border-slate-200 pt-6"><div className="grid gap-3 sm:grid-cols-4">{stages.map((stage, index) => <div key={stage} className={`rounded-2xl p-4 ${!rejected && index <= currentIndex ? "bg-indigo-50 text-indigo-700" : "bg-slate-50 text-slate-400"}`}><div className="flex items-center gap-2"><span className={`grid h-6 w-6 place-items-center rounded-full text-xs font-black ${!rejected && index <= currentIndex ? "bg-indigo-600 text-white" : "bg-slate-200"}`}>{index + 1}</span><p className="text-xs font-black">{stage}</p></div><p className="mt-2 text-[11px]">{history.find((x) => x.status === stage)?.changedAt ? new Date(history.find((x) => x.status === stage).changedAt).toLocaleDateString() : "Not reached"}</p></div>)}</div>{rejected && <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">This application was not selected.</p>}</div>; }
 export default StudentApplications;

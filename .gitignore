@@ -10,6 +10,8 @@ frontend/yarn-error.log*
 
 # ---------- Backend (Spring Boot / Maven) ----------
 backend/target/
+backend/uploads/
+uploads/
 backend/HELP.md
 backend/*.iml
 backend/.classpath

@@ -1,16 +1,29 @@
-# React + Vite
+# UniConnect Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The UniConnect frontend is a responsive React application for students, companies, and platform administrators. It includes role-based dashboards, a mobile navigation drawer, touch-friendly layouts, dark mode, internship discovery, saved opportunities, application tracking, CV management, notifications, account settings, candidate review, and administration tools.
 
-Currently, two official plugins are available:
+## Start locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```powershell
+npm install
+npm run dev
+```
 
-## React Compiler
+Open `http://localhost:5173` and keep the Spring Boot backend running on port `8080`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Environment
 
-## Expanding the ESLint configuration
+Copy `.env.example` to `.env` only when the backend uses a different URL:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```env
+VITE_API_URL=http://localhost:8080/api
+```
+
+Do not commit `.env`.
+
+## Quality checks
+
+```powershell
+npm run lint
+npm run build
+```

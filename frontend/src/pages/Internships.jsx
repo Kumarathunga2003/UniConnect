@@ -1,124 +1,24 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import DashboardLayout from "../components/DashboardLayout";
+import { Alert, EmptyState, LoadingState } from "../components/Ui";
 import api from "../api/axios";
 
 function Internships() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [items, setItems] = useState([]); const [savedIds, setSavedIds] = useState(new Set());
+  const [search, setSearch] = useState(""); const [type, setType] = useState("ALL"); const [sort, setSort] = useState("NEWEST"); const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+  useEffect(() => { Promise.all([api.get("/internships"), api.get("/students/saved-internships")]).then(([all, saved]) => { setItems(Array.isArray(all.data) ? all.data : all.data.internships || []); setSavedIds(new Set(saved.data.map((item) => item.id))); }).catch((err) => setError(err.response?.data?.message || "Unable to load internships.")).finally(() => setLoading(false)); }, []);
+  const filtered = items.filter((item) => `${item.title} ${item.companyName} ${item.location} ${item.internshipType}`.toLowerCase().includes(search.toLowerCase())).filter((item) => type === "ALL" || item.internshipType === type).sort((a, b) => sort === "DEADLINE" ? String(a.deadline || "9999").localeCompare(String(b.deadline || "9999")) : new Date(b.createdAt) - new Date(a.createdAt));
+  const pageSize = 6; const pages = Math.max(1, Math.ceil(filtered.length / pageSize)); const visible = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const toggleSave = async (id) => { if (savedIds.has(id)) await api.delete(`/students/saved-internships/${id}`); else await api.post(`/students/saved-internships/${id}`); setSavedIds((previous) => { const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
 
-    const [internships, setInternships] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-
-    useEffect(() => {
-        const loadInternships = async () => {
-            try {
-                const response = await api.get("/internships");
-
-                const internshipData = Array.isArray(response.data)
-                    ? response.data
-                    : response.data.internships || [];
-
-                setInternships(internshipData);
-            } catch (err) {
-                setError(
-                    err.response?.data?.message ||
-                    "Unable to load internships."
-                );
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadInternships();
-    }, []);
-
-    return (
-        <div className="min-h-screen bg-gray-100 p-6">
-            <div className="mx-auto max-w-6xl">
-                <button
-                    type="button"
-                    onClick={() => navigate("/student/dashboard")}
-                    className="mb-6 text-blue-600 hover:underline"
-                >
-                    ← Back to Dashboard
-                </button>
-
-                <h1 className="text-3xl font-bold text-gray-800">
-                    Available Internships
-                </h1>
-
-                <p className="mt-2 text-gray-600">
-                    Find an opportunity that matches your career goals.
-                </p>
-
-                {loading && (
-                    <p className="mt-8 text-gray-600">
-                        Loading internships...
-                    </p>
-                )}
-
-                {error && (
-                    <p className="mt-6 rounded-lg bg-red-100 p-4 text-red-700">
-                        {error}
-                    </p>
-                )}
-
-                {!loading && !error && internships.length === 0 && (
-                    <p className="mt-8 rounded-xl bg-white p-6 text-gray-600 shadow">
-                        No internships are currently available.
-                    </p>
-                )}
-
-                <div className="mt-8 grid gap-6 md:grid-cols-2">
-                    {internships.map((internship) => (
-                        <div
-                            key={internship.id}
-                            className="rounded-xl bg-white p-6 shadow"
-                        >
-                            <h2 className="text-2xl font-bold text-gray-800">
-                                {internship.title}
-                            </h2>
-
-                            <p className="mt-2 font-medium text-blue-600">
-                                {internship.companyName || "Company"}
-                            </p>
-
-                            <p className="mt-4 text-gray-600">
-                                {internship.description || "No description provided."}
-                            </p>
-
-                            <div className="mt-5 space-y-2 text-sm text-gray-600">
-                                <p>
-                                    <span className="font-semibold">Location:</span>{" "}
-                                    {internship.location || "Not specified"}
-                                </p>
-
-                                <p>
-                                    <span className="font-semibold">Type:</span>{" "}
-                                    {internship.internshipType || "Not specified"}
-                                </p>
-
-                                <p>
-                                    <span className="font-semibold">Deadline:</span>{" "}
-                                    {internship.deadline || "Not specified"}
-                                </p>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    navigate(`/student/internships/${internship.id}`)
-                                }
-                                className="mt-6 rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700"
-                            >
-                                View Details
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
+  return <DashboardLayout role="STUDENT" title="Explore Internships">
+    <div className="mb-7 flex flex-col justify-between gap-4 rounded-3xl bg-gradient-to-r from-indigo-600 to-blue-600 p-5 text-white shadow-xl sm:flex-row sm:items-center sm:p-8"><div><p className="text-sm font-bold uppercase tracking-[.16em] text-indigo-100">Find your next step</p><h2 className="mt-2 text-2xl font-black">Opportunities built for your future</h2><p className="mt-2 text-indigo-100">Search, filter, save, and apply directly.</p></div><div className="rounded-2xl bg-white/15 px-5 py-4 text-center"><p className="text-3xl font-black">{items.length}</p><p className="text-xs font-bold uppercase text-indigo-100">Open roles</p></div></div>
+    <div className="mb-6 grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:grid-cols-[1fr_180px_180px]"><div className="flex items-center gap-3"><span className="pl-2 text-xl text-slate-400">⌕</span><input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search title, company, or location..." className="w-full border-0 bg-transparent px-2 py-2.5 shadow-none! focus:shadow-none!" /></div><select value={type} onChange={(e) => { setType(e.target.value); setPage(1); }} className="rounded-xl border border-slate-200 px-3"><option value="ALL">All work types</option><option value="ONSITE">On-site</option><option value="REMOTE">Remote</option><option value="HYBRID">Hybrid</option></select><select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-xl border border-slate-200 px-3"><option value="NEWEST">Newest first</option><option value="DEADLINE">Closing soon</option></select></div>
+    {error && <Alert>{error}</Alert>}{loading ? <LoadingState label="Loading opportunities..." /> : <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{visible.map((item) => <article key={item.id} className="group flex flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl sm:p-6"><div className="flex items-start justify-between gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-50 text-xl font-black text-indigo-700">{(item.companyName || "C")[0]}</div><div className="flex min-w-0 items-center gap-2"><span className="truncate rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700">{item.internshipType || "Flexible"}</span><button onClick={() => toggleSave(item.id)} className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-slate-200 text-lg text-indigo-600" title="Save internship" aria-label={savedIds.has(item.id) ? "Remove saved internship" : "Save internship"}>{savedIds.has(item.id) ? "♥" : "♡"}</button></div></div><h2 className="mt-5 break-words text-xl font-black group-hover:text-indigo-600">{item.title}</h2><p className="mt-1 break-words font-semibold text-indigo-600">{item.companyName || "Company"}</p><p className="mt-4 line-clamp-3 flex-1 text-sm leading-6 text-slate-600">{item.description || "No description provided."}</p><div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-slate-500"><span className="rounded-lg bg-slate-50 px-3 py-2">⌖ {item.location || "Not specified"}</span><span className="rounded-lg bg-slate-50 px-3 py-2">◷ {item.deadline || "Open"}</span></div><button onClick={() => navigate(`/student/internships/${item.id}`)} className="btn-primary mt-6 w-full">View opportunity →</button></article>)}{!visible.length && <div className="md:col-span-2 xl:col-span-3"><EmptyState icon="⌕" title="No opportunities found" description="Try changing your search or filters." /></div>}</div>}
+    {!loading && filtered.length > pageSize && <div className="mt-7 grid grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-center"><span className="col-span-2 text-center text-sm font-bold text-slate-500 sm:order-2 sm:col-auto">Page {page} of {pages}</span><button disabled={page === 1} onClick={() => setPage((value) => value - 1)} className="btn-secondary w-full sm:order-1 sm:w-auto">Previous</button><button disabled={page === pages} onClick={() => setPage((value) => value + 1)} className="btn-secondary w-full sm:order-3 sm:w-auto">Next</button></div>}
+  </DashboardLayout>;
 }
-
 export default Internships;

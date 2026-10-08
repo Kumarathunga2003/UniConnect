@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import api from "../api/axios";
 import { getErrorMessage } from "../utils/errors";
+import { Alert, EmptyState } from "../components/Ui";
 
 const emptyEducation = { institution: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "" };
 
@@ -66,34 +67,34 @@ function StudentPortfolio() {
 
   return (
     <DashboardLayout role="STUDENT" title="Education & Skills">
-      {message && <p className="mb-5 rounded-xl bg-emerald-50 p-4 text-emerald-700">{message}</p>}
-      {error && <p className="mb-5 rounded-xl bg-red-50 p-4 text-red-700">{error}</p>}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold">Skills</h2>
+      {message && <Alert type="success">{message}</Alert>}
+      {error && <Alert>{error}</Alert>}
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="flex items-center gap-4"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-xl text-white">✦</span><div><p className="text-xs font-black uppercase tracking-[.16em] text-indigo-600">Expertise</p><h2 className="mt-1 text-xl font-black">Skills</h2></div></div>
         <p className="mt-1 text-sm text-slate-500">Enter skills separated by commas.</p>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input value={skillText} onChange={(e) => setSkillText(e.target.value)} placeholder="Java, React, MySQL" className="flex-1 rounded-xl border border-slate-300 px-4 py-3" />
-          <button onClick={saveSkills} className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white">Save Skills</button>
+          <button onClick={saveSkills} className="btn-primary">Save skills</button>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">{skills.map((skill) => <span key={skill} className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">{skill}</span>)}</div>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold">{editingId ? "Edit education" : "Add education"}</h2>
+      <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <p className="text-xs font-black uppercase tracking-[.16em] text-indigo-600">Academic journey</p><h2 className="mt-2 text-xl font-black">{editingId ? "Edit education" : "Add education"}</h2>
         <form onSubmit={saveEducation} className="mt-5 grid gap-4 sm:grid-cols-2">
           {[["Institution", "institution"], ["Degree", "degree"], ["Field of study", "fieldOfStudy"]].map(([label, name]) => (
             <label key={name} className="text-sm font-semibold text-slate-700">{label}<input required={name === "institution"} value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
           ))}
           <label className="text-sm font-semibold text-slate-700">Start date<input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
           <label className="text-sm font-semibold text-slate-700">End date<input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
-          <div className="flex gap-3 sm:col-span-2">
-            <button className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white">{editingId ? "Update" : "Add"}</button>
-            {editingId && <button type="button" onClick={() => { setEditingId(null); setForm(emptyEducation); }} className="rounded-xl border px-6 py-3 font-bold">Cancel</button>}
+          <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row">
+            <button className="btn-primary w-full sm:w-auto">{editingId ? "Update education" : "Add education"}</button>
+            {editingId && <button type="button" onClick={() => { setEditingId(null); setForm(emptyEducation); }} className="btn-secondary w-full sm:w-auto">Cancel</button>}
           </div>
         </form>
         <div className="mt-7 space-y-3">
-          {education.map((item) => <div key={item.id} className="flex flex-col justify-between gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center"><div><h3 className="font-bold">{item.degree || "Education"} — {item.institution}</h3><p className="text-sm text-slate-500">{item.fieldOfStudy || "Field not specified"} · {item.startDate || "?"} to {item.endDate || "Present"}</p></div><div className="flex gap-2"><button onClick={() => editEducation(item)} className="rounded-lg border px-3 py-2 text-sm font-semibold">Edit</button><button onClick={() => deleteEducation(item.id)} className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">Delete</button></div></div>)}
-          {!education.length && <p className="text-slate-500">No education records yet.</p>}
+          {education.map((item) => <div key={item.id} className="flex flex-col justify-between gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center"><div className="min-w-0"><h3 className="break-words font-bold">{item.degree || "Education"}: {item.institution}</h3><p className="mt-1 break-words text-sm text-slate-500">{item.fieldOfStudy || "Field not specified"} · {item.startDate || "?"} to {item.endDate || "Present"}</p></div><div className="flex gap-2"><button onClick={() => editEducation(item)} className="min-h-11 flex-1 rounded-lg border px-3 py-2 text-sm font-semibold sm:flex-none">Edit</button><button onClick={() => deleteEducation(item.id)} className="min-h-11 flex-1 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 sm:flex-none">Delete</button></div></div>)}
+          {!education.length && <EmptyState icon="◇" title="No education records" description="Add your university and degree information to strengthen your profile." />}
         </div>
       </section>
     </DashboardLayout>
