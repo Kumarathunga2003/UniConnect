@@ -37,4 +37,22 @@ public class GlobalExceptionHandler {
                 )
         );
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(
+            IllegalArgumentException exception) {
+        return ResponseEntity.badRequest().body(
+                Map.of("message", exception.getMessage())
+        );
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleRuntimeException(
+            RuntimeException exception) {
+        return ResponseEntity.badRequest().body(
+                Map.of("message", exception.getMessage() == null
+                        ? "Unable to complete the request"
+                        : exception.getMessage())
+        );
+    }
 }
